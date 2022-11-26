@@ -1,5 +1,5 @@
 # Coompo.js
-v1.0.0
+v1.0.2
 
 `npm install`: Install required packages
 
@@ -42,14 +42,23 @@ props: {
 
 ## Include and initialize a component with `of(props)`
 ```javascript
+const title = Coompo.Component({ /* ... */ })
+
+const paragraph = Coompo.Component({ /* ... */ })
+
+const nextSectionButton = Coompo.Component({ /* ... */ })
+
 const section = Coompo.Component({
     /* ... */
+    props: {
+        title: { default: 'Untitled' },
+        paragraphs: { default: [] }
+    },
     render: (props) =>
 
 `<section>
-    ${ title.of({ text: 'Title' }) }
-    ${ paragraph.of({ text: 'First paragraph' }) }
-    ${ paragraph.of({ text: 'Second paragraph' }) }
+    ${ title.of({ text: props.title }) }
+    ${ (props.paragraphs ?? []).map(p => paragraph.of({ text: p })).join('') }
     ${ nextSectionButton.of() }
 </section>`
 
@@ -83,7 +92,7 @@ You can use double-binding between an input's value and a component's prop :
 const hello = Coompo.Component({
     /* ... */
     props: {
-        name: { default:'' }
+        name: { default: '' }
     },
     render: (props) =>
 
@@ -123,7 +132,7 @@ const game = Coompo.Component({
     on: {
         propChange: (prop, newValue, oldValue) =>
         {
-            if (prop = 'winner')
+            if (prop === 'winner')
             {
                 console.log(`Now the winner is ${newValue} !`)
             }
