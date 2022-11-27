@@ -1,5 +1,5 @@
 # Coompo.js
-v1.0.2
+v1.1.0
 
 `npm install`: Install required packages
 
