@@ -131,6 +131,34 @@ describe("[Coompo.js]", () =>
                 "The prop 'text' of the component 'title' can't be both default and required."
             ))
         })
+        
+        describe("should handle props' validator", () =>
+        {
+            let latestErrors;
+            const validateName = (value) =>
+            {
+                const errors = []
+                if (value.length < 1) { errors.push('A name must contain at least one character') }
+                if (!/^[A-Za-z]+$/.test(value)) { errors.push('A name must contain only letters') }
+                latestErrors = errors
+                return errors
+            }
+            const person = Coompo.Component({
+                name: 'name',
+                props: {
+                    text: { default: '', validator: validateName }
+                },
+                render: (props) => `<p>${ props.name }</p>`
+            })
+            setTimeout(() =>
+            {
+                expect(person.of({ name: '' })).toBe('<p _coo-i="0"></p>')
+                expect(latestErrors).toEqual([
+                    'A name must contain at least one character',
+                    'A name must contain only letters'
+                ])
+            }, 1000)
+        })
     })
 
     describe("[Rendering]", () =>
@@ -189,7 +217,7 @@ describe("[Coompo.js]", () =>
             )
         })
 
-        describe('should forbid less or more then one root HTML element', () => {
+        describe('should forbid less or more than one root HTML element', () => {
             it('in the case of no root element', () => {
                 const text = Coompo.Component({
                     name: 'text',
