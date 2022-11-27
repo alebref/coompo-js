@@ -1,6 +1,6 @@
 {
   "name": "coompo-js",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Coompo.js",
   "author": "alebref",
   "license": "GPL-3.0-or-later",
@@ -14,10 +14,8 @@
     "test": "jasmine"
   },
   "devDependencies": {
-    "babel-cli": "^6.26.0",
-    "babel-core": "^6.26.3",
-    "babel-plugin-transform-object-rest-spread": "^6.26.0",
-    "babel-preset-env": "^1.7.0",
+    "@babel/cli": "^7.19.3",
+    "@babel/core": "^7.20.2",
     "fs": "0.0.1-security",
     "jasmine": "^3.6.2",
     "jsdom": "^16.4.0",

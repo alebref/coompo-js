@@ -247,49 +247,47 @@ Coompo.Component = (component) =>
 		component.memo = {}
 	}
 
-	component.of = (props = {}) =>
+	component.of = (givenProps = {}) =>
 	{
 		const id = Coompo.nextInstance++
-		if (Coompo.instances[id] === undefined)
+		
+	    const expectedProps = component.props
+		for (const p in expectedProps)
 		{
-			for (const p in component.props)
+			if (!expectedProps[p].hasOwnProperty('default') && !expectedProps[p].hasOwnProperty('required'))
 			{
-				if (!component.props[p].hasOwnProperty('default') && !component.props[p].hasOwnProperty('required'))
-				{
-					throw Coompo.Exception(
-						'prop_misdefined',
-						`The prop '${p}' of the component '${component.name}' must be either '{ required: true }' or '{ default: ... }'.`
-					)
-				}
-				if (component.props[p].hasOwnProperty('default') && component.props[p].required)
-				{
-					throw Coompo.Exception(
-						'prop_both_default_required',
-						`The prop '${p}' of the component '${component.name}' can't be both default and required.`
-					)
-				}
-				if (!props.hasOwnProperty(p))
-				{
-					if (component.props[p].required)
-					{
-						throw Coompo.Exception(
-							'prop_required',
-							`The prop '${p}' of the component '${component.name}' is required.`
-						)
-					}
-					else
-					{
-						props[p] = component.props[p].default
-					}
-				}
+				throw Coompo.Exception(
+					'prop_misdefined',
+					`The prop '${p}' of the component '${component.name}' must be either '{ required: true }' or '{ default: ... }'.`
+				)
 			}
+			if (expectedProps[p].hasOwnProperty('default') && expectedProps[p].required)
+			{
+				throw Coompo.Exception(
+					'prop_both_default_required',
+					`The prop '${p}' of the component '${component.name}' can't be both default and required.`
+				)
+			}
+			if (!givenProps.hasOwnProperty(p)) {
+			    if(expectedProps[p].required)
+			    {
+				    throw Coompo.Exception(
+					    'prop_required',
+					    `The prop '${p}' of the component '${component.name}' is required.`
+				    )
+			    }
+			    else
+			    {
+			        givenProps[p] = expectedProps[p].default
+			    }
+            }
+		}
 
-			Coompo.instances[id] = {
-				id,
-				component,
-				props,
-				previousProps: {...props}
-			}
+		Coompo.instances[id] = {
+			id,
+			component,
+			props: givenProps,
+			previousProps: {...givenProps} // no propChange to emit for now => previous prop values are set equal to actual ones
 		}
 
 		return render(Coompo.instances[id])
@@ -309,8 +307,25 @@ Coompo.compose = (component, props = {}) =>
 {
 	document.querySelector('[coompo-root]').outerHTML = component.of(props)
 	
-	forAllInstances(attachEventHandlers)
-
+	forAllInstances((instance) =>
+	{
+	    attachEventHandlers(instance)
+	    
+	    for (const p in instance.props)
+	    {
+	        if (instance.component.props[p].validator)
+            {
+                const errors = instance.component.props[p].validator(instance.props[p]) ?? []
+                if (instance.component.on && instance.component.on.propValidation)
+                {
+                    instance.component.on.propValidation(
+                        p, instance.props[p], errors.length === 0, errors
+                    )
+                }
+            }
+	    }
+	})
+	
 	setInterval(() =>
 	{
 		const changedInstances = []
@@ -321,13 +336,22 @@ Coompo.compose = (component, props = {}) =>
 				if (instance.props[p] !== instance.previousProps[p])
 				{
 					changedInstances.push(instance.id)
-
 					if (instance.component.on && instance.component.on.propChange)
 					{
 						instance.component.on.propChange(
 							p, instance.props[p], instance.previousProps[p]
 						)
 					}
+                    if (instance.component.props[p].validator)
+                    {
+                        const errors = instance.component.props[p].validator(instance.props[p]) ?? []
+                        if (instance.component.on && instance.component.on.propValidation)
+	                    {
+		                    instance.component.on.propValidation(
+			                    p, instance.props[p], errors.length === 0, errors
+		                    )
+	                    }
+	                }
 				}
 			}
 			instance.previousProps = {...instance.props}
@@ -338,7 +362,7 @@ Coompo.compose = (component, props = {}) =>
 		}
 		else if (changedInstances.length > 0)
 		{
-			rerender(Coompo.instances[0])
+			rerender(Coompo.instances[0]) // rerenders root entirely TODO avoid this
 		}
 		for (const b in Coompo.bindings)
 		{
