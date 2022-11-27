@@ -40,6 +40,29 @@ props: {
 }
 ```
 
+## Props : validate with `validator`
+
+```javascript
+const validateName = (value) =>
+{
+    const errors = []
+    if (value.length < 1) { errors.push('A name must contain at least one character') }
+    if (!/^[A-Za-z]+$/.test(value)) { errors.push('A name must contain only letters') }
+    return errors
+}
+const person = Coompo.Component({
+    name: 'name',
+    props: {
+        text: { default: '', validator: validateName }
+    },
+    render: (props) => `<p>${ props.name }</p>`
+})
+```
+
+The validator must return an array of strings. It is empty if there aren't validation errors. Otherwise it contains the error messages.
+
+See the `propValidation` event section below.
+
 ## Include and initialize a component with `of(props)`
 ```javascript
 const title = Coompo.Component({ /* ... */ })
@@ -102,7 +125,6 @@ const hello = Coompo.Component({
 </form>`
 
 })
-
 ```
 
 ## React to HTML events with the `on` field of a component
@@ -139,7 +161,56 @@ const game = Coompo.Component({
         }
     }
 })
+```
 
+## The `propValidation` event
+The `propValidation` event is triggered when a prop's value has been validated (on component first rendering, then at each prop change).
+Its arguments are :
+
+1. the prop's name
+2. the value of the prop
+3. an indicator that is `true` if the value is valid, `false` if it is invalid
+4. the list of the error messages (one for each criterion of validation that hasn't been respected)
+
+
+```javascript
+const state = {
+    nameErrors: [],
+    ageErrors: []
+}
+
+const errorsToComponents = (errors) => errors.length > 0
+    ? errors.map(e => error.of({ text: e })).join('')
+    : ''
+
+const form = Coompo.Component({
+    name: 'form',
+    props: {
+        firstname: { default: '', validator: validateName },
+        age: { default: '', validator: validateAge }
+    },
+    on: {
+        propValidation: (prop, value, isValid, errors) => 
+        {
+            console.log('propValidation', prop, value, isValid, errors)
+            if (prop === 'firstname') { state.nameErrors = errors }
+            else { state.ageErrors = errors }
+        }
+    },
+    render: () =>
+
+`<form>
+    <div>
+        <label for="firstname">First name</label>
+        <input id=firstname" coompo-is="firstname" />
+        ${ errorsToComponents(state.nameErrors) }
+    </div>
+    <div>
+        <label for="age">Age</label>
+        <input id=age" coompo-is="age" />
+        ${ errorsToComponents(state.ageErrors) }
+    </div>
+</form>`
 ```
 
 ## Custom events
